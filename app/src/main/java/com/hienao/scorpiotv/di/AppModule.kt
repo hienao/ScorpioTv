@@ -7,7 +7,7 @@ import com.hienao.scorpiotv.data.repository.MediaRepositoryImpl
 import com.hienao.scorpiotv.domain.repository.MediaRepository
 import com.hienao.scorpiotv.presentation.screen.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

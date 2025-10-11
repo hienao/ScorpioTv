@@ -1,7 +1,7 @@
 package com.hienao.scorpiotv.presentation.base
 
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
@@ -45,7 +45,7 @@ fun <S : BaseContract.UiState, I : BaseContract.UiIntent, E : BaseContract.UiEff
  * 用于在Composable中处理一次性事件
  */
 @Composable
-fun <E : BaseContract.UiEffect> Flow<E>.collectAsEffect(
+fun <E : BaseContract.UiEffect> Flow<E>.CollectAsEffect(
     lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle,
     minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
     onEffect: (E) -> Unit
@@ -61,7 +61,7 @@ fun <E : BaseContract.UiEffect> Flow<E>.collectAsEffect(
  * 收集UI效果的另一种实现，使用SharedFlow
  */
 @Composable
-fun <E : BaseContract.UiEffect> SharedFlow<E>.collectAsEffect(
+fun <E : BaseContract.UiEffect> SharedFlow<E>.CollectAsEffect(
     lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle,
     minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
     onEffect: (E) -> Unit
