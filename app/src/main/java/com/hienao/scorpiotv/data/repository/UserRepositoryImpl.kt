@@ -46,11 +46,11 @@ class UserRepositoryImpl(
             // 调用登录API
             val result = apiService.login(request.username, request.password)
             
-            when (result) {
+            when (result.result) {
                 is ApiResult.Success -> {
                     val loginResponse = LoginResponse(
-                        ok = result.data.ok,
-                        error = result.data.error
+                        ok = result.result.data.ok,
+                        error = result.result.data.error
                     )
                     
                     if (loginResponse.ok) {
@@ -65,12 +65,21 @@ class UserRepositoryImpl(
                         )
                         saveUser(user)
                         saveServerUrl(request.serverUrl)
+                        
+                        // 保存认证Cookie
+                        result.setCookieHeader?.let { cookieHeader ->
+                            // 从Set-Cookie头中提取auth cookie
+                            val authCookie = extractAuthCookie(cookieHeader)
+                            if (authCookie != null) {
+                                saveAuthCookie(authCookie)
+                            }
+                        }
                     }
                     
                     Result.success(loginResponse)
                 }
                 is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "登录失败"))
+                    Result.failure(Exception(result.result.message ?: "登录失败"))
                 }
                 is ApiResult.Loading -> {
                     Result.failure(Exception("登录中..."))
@@ -215,5 +224,31 @@ class UserRepositoryImpl(
 
     override suspend fun getAuthCookie(): String? {
         return dataStore.data.first()[AUTH_COOKIE_KEY]
+    }
+    
+    /**
+     * 从Set-Cookie头中提取auth cookie
+     */
+    private fun extractAuthCookie(setCookieHeader: String): String? {
+        // Set-Cookie头可能包含多个cookie，格式如：
+        // auth={"username":"user","password":"pass","signature":"sig","timestamp":123}; Path=/; HttpOnly
+        try {
+            // 查找auth=部分
+            val authStart = setCookieHeader.indexOf("auth=")
+            if (authStart == -1) return null
+            
+            val authValueStart = authStart + 5 // "auth=".length
+            val authEnd = setCookieHeader.indexOf(';', authValueStart)
+            val authValue = if (authEnd == -1) {
+                setCookieHeader.substring(authValueStart)
+            } else {
+                setCookieHeader.substring(authValueStart, authEnd)
+            }
+            
+            return authValue
+        } catch (e: Exception) {
+            // 解析失败，返回null
+            return null
+        }
     }
 }

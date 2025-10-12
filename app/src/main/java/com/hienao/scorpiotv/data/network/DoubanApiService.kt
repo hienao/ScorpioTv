@@ -38,7 +38,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
         pageStart: Int = 0,
         authCookie: String? = null
     ): ApiResult<DoubanResponseDto> {
-        return ktorClient.get(
+        return ktorClient.get<DoubanResponseDto>(
             url = getApiUrl("/api/douban"),
             params = mapOf(
                 "type" to type,
@@ -47,7 +47,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
                 "pageStart" to pageStart.toString()
             ),
             authCookie = authCookie
-        )
+        ).result
     }
     
     /**
@@ -61,7 +61,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
         start: Int = 0,
         authCookie: String? = null
     ): ApiResult<DoubanResponseDto> {
-        return ktorClient.get(
+        return ktorClient.get<DoubanResponseDto>(
             url = getApiUrl("/api/douban/categories"),
             params = mapOf(
                 "kind" to kind,
@@ -71,7 +71,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
                 "start" to start.toString()
             ),
             authCookie = authCookie
-        )
+        ).result
     }
     
     /**
@@ -104,11 +104,11 @@ class DoubanApiService(private val ktorClient: KtorClient) {
         sort?.let { params["sort"] = it }
         label?.let { params["label"] = it }
         
-        return ktorClient.get(
+        return ktorClient.get<DoubanResponseDto>(
             url = getApiUrl("/api/douban/recommends"),
             params = params,
             authCookie = authCookie
-        )
+        ).result
     }
     
     /**
@@ -118,7 +118,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
         kind: String,
         authCookie: String? = null
     ): ApiResult<DoubanRecommendCategoriesResponse> {
-        return ktorClient.get(
+        return ktorClient.get<DoubanRecommendCategoriesResponse>(
             url = getApiUrl("/api/douban/recommends"),
             params = mapOf(
                 "kind" to kind,
@@ -126,7 +126,7 @@ class DoubanApiService(private val ktorClient: KtorClient) {
                 "start" to "0"
             ),
             authCookie = authCookie
-        )
+        ).result
     }
 }
 

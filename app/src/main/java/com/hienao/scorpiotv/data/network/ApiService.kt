@@ -34,7 +34,7 @@ class ApiService(private val ktorClient: KtorClient) {
     suspend fun login(
         username: String?,
         password: String
-    ): ApiResult<LoginResponseDto> {
+    ): ApiResultWithCookie<LoginResponseDto> {
         val requestBody = if (username != null) {
             LoginRequestDto(username, password)
         } else {
@@ -52,18 +52,18 @@ class ApiService(private val ktorClient: KtorClient) {
      * 用户登出
      */
     suspend fun logout(): ApiResult<LogoutResponseDto> {
-        return ktorClient.post(
+        return ktorClient.post<LogoutResponseDto>(
             url = getApiUrl("/api/logout")
-        )
+        ).result
     }
     
     /**
      * 获取服务器配置
      */
     suspend fun getServerConfig(): ApiResult<ServerConfigDto> {
-        return ktorClient.get(
+        return ktorClient.get<ServerConfigDto>(
             url = getApiUrl("/api/server-config")
-        )
+        ).result
     }
 
     // ============= 内容搜索API =============
@@ -72,23 +72,23 @@ class ApiService(private val ktorClient: KtorClient) {
      * 搜索影视资源
      */
     suspend fun searchMedia(query: String): ApiResult<SearchResponseDto> {
-        return ktorClient.get(
+        return ktorClient.get<SearchResponseDto>(
             url = getApiUrl("/api/search"),
             params = mapOf("q" to query)
-        )
+        ).result
     }
     
     /**
      * 获取影视详情
      */
     suspend fun getMediaDetail(id: String, source: String): ApiResult<MediaDetailDto> {
-        return ktorClient.get(
+        return ktorClient.get<MediaDetailDto>(
             url = getApiUrl("/api/detail"),
             params = mapOf(
                 "id" to id,
                 "source" to source
             )
-        )
+        ).result
     }
 
     // ============= 直播相关API =============
@@ -97,10 +97,10 @@ class ApiService(private val ktorClient: KtorClient) {
      * 获取直播频道列表
      */
     suspend fun getLiveChannels(source: String): ApiResult<LiveChannelsResponseDto> {
-        return ktorClient.get(
+        return ktorClient.get<LiveChannelsResponseDto>(
             url = getApiUrl("/api/live/channels"),
             params = mapOf("source" to source)
-        )
+        ).result
     }
 
     // ============= 示例API（保留用于参考） =============
@@ -112,22 +112,22 @@ class ApiService(private val ktorClient: KtorClient) {
         page: Int = 1,
         pageSize: Int = 20
     ): ApiResult<MediaListResponse> {
-        return ktorClient.get(
+        return ktorClient.get<MediaListResponse>(
             url = getApiUrl("/media/list"),
             params = mapOf(
                 "page" to page.toString(),
                 "pageSize" to pageSize.toString()
             )
-        )
+        ).result
     }
     
     /**
      * 获取媒体详情示例
      */
     suspend fun getMediaDetailExample(id: String): ApiResult<MediaDetailResponse> {
-        return ktorClient.get(
+        return ktorClient.get<MediaDetailResponse>(
             url = getApiUrl("/media/$id")
-        )
+        ).result
     }
     
     /**

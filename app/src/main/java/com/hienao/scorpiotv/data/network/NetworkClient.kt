@@ -95,8 +95,8 @@ class KtorClient(val httpClient: HttpClient) {
         headers: Map<String, String> = emptyMap(),
         params: Map<String, String> = emptyMap(),
         authCookie: String? = null
-    ): ApiResult<T> = safeApiCall {
-        httpClient.get(url) {
+    ): ApiResultWithCookie<T> = safeApiCallWithCookie {
+        val response = httpClient.get(url) {
             headers.forEach { (key, value) ->
                 header(key, value)
             }
@@ -107,7 +107,15 @@ class KtorClient(val httpClient: HttpClient) {
             authCookie?.let {
                 header(HttpHeaders.Cookie, it)
             }
-        }.body()
+        }
+        
+        val body = response.body<T>()
+        val setCookieHeader = response.headers["Set-Cookie"]
+        
+        ApiResultWithCookie(
+            result = ApiResult.Success(body),
+            setCookieHeader = setCookieHeader
+        )
     }
     
     /**
@@ -122,8 +130,8 @@ class KtorClient(val httpClient: HttpClient) {
         body: Any? = null,
         headers: Map<String, String> = emptyMap(),
         authCookie: String? = null
-    ): ApiResult<T> = safeApiCall {
-        httpClient.post(url) {
+    ): ApiResultWithCookie<T> = safeApiCallWithCookie {
+        val response = httpClient.post(url) {
             headers.forEach { (key, value) ->
                 header(key, value)
             }
@@ -132,7 +140,15 @@ class KtorClient(val httpClient: HttpClient) {
             authCookie?.let {
                 header(HttpHeaders.Cookie, it)
             }
-        }.body()
+        }
+        
+        val responseBody = response.body<T>()
+        val setCookieHeader = response.headers["Set-Cookie"]
+        
+        ApiResultWithCookie(
+            result = ApiResult.Success(responseBody),
+            setCookieHeader = setCookieHeader
+        )
     }
     
     /**
@@ -226,6 +242,60 @@ suspend fun <T> safeApiCall(
         exception = e,
         message = e.message ?: "网络请求失败",
         code = -1
+    )
+}
+
+/**
+ * 包含Cookie信息的API结果
+ */
+data class ApiResultWithCookie<T>(
+    val result: ApiResult<T>,
+    val setCookieHeader: String?
+)
+
+/**
+ * 网络异常处理扩展（带Cookie）
+ */
+suspend fun <T> safeApiCallWithCookie(
+    apiCall: suspend () -> ApiResultWithCookie<T>
+): ApiResultWithCookie<T> = try {
+    apiCall()
+} catch (e: ClientRequestException) {
+    // 处理HTTP错误状态码
+    val statusCode = e.response.status.value
+    val errorMessage = when (statusCode) {
+        401 -> "认证失败，请检查登录状态或服务器配置"
+        403 -> "权限不足，无法访问该资源"
+        404 -> "请求的资源不存在"
+        500 -> "服务器内部错误，请稍后重试"
+        else -> "HTTP错误: $statusCode - ${e.response.status.description}"
+    }
+    
+    ApiResultWithCookie(
+        result = ApiResult.Error(
+            exception = e,
+            message = errorMessage,
+            code = statusCode
+        ),
+        setCookieHeader = null
+    )
+} catch (e: HttpRequestTimeoutException) {
+    ApiResultWithCookie(
+        result = ApiResult.Error(
+            exception = e,
+            message = "请求超时,请检查网络连接",
+            code = -1
+        ),
+        setCookieHeader = null
+    )
+} catch (e: Exception) {
+    ApiResultWithCookie(
+        result = ApiResult.Error(
+            exception = e,
+            message = e.message ?: "网络请求失败",
+            code = -1
+        ),
+        setCookieHeader = null
     )
 }
 
