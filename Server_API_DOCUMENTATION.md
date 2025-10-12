@@ -122,7 +122,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "results": [
     {
       "vod_id": "string",
-      "vod_name": "string", 
+      "vod_name": "string",
       "vod_pic": "string",
       "vod_remarks": "string",
       "type_name": "string",
@@ -157,7 +157,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 {
   "vod_id": "string",
   "vod_name": "string",
-  "vod_pic": "string", 
+  "vod_pic": "string",
   "vod_content": "string",
   "vod_play_from": "string",
   "vod_play_url": "string",
@@ -240,7 +240,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 {
   "source+id": {
     "title": "string",
-    "poster": "string", 
+    "poster": "string",
     "source_name": "string",
     "save_time": 1234567890
   }
@@ -282,7 +282,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "source+id": {
     "title": "string",
     "poster": "string",
-    "source_name": "string", 
+    "source_name": "string",
     "index": 1,
     "progress": 300,
     "save_time": 1234567890
@@ -318,13 +318,24 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **接口**: `GET /api/douban`
 
-**描述**: 获取豆瓣影视数据
+**描述**: 获取豆瓣影视数据，支持标签分类和Top250榜单
 
 **请求参数**:
-- `type` (query string): 类型 `tv` 或 `movie`
-- `tag` (query string): 标签，如 `热门`、`top250`
-- `pageSize` (query string): 每页数量，默认16，最大100
-- `pageStart` (query string): 起始位置，默认0
+- `type` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
+- `tag` (query string, 必需): 标签分类，常用值：
+    - 电视剧：`热门`、`美剧`、`英剧`、`韩剧`、`日剧`、`国产剧`
+    - 电影：`热门`、`最新`、`经典`、`豆瓣高分`、`喜剧`、`动作`、`爱情`、`科幻`、`悬疑`、`恐怖`、`动画`
+    - 动漫：`热门`、`日本`、`国产`、`欧美`、`番剧`、`动画电影`
+    - 综艺：`热门`、`国产`、`韩国`、`日本`、`欧美`、`音乐`、`真人秀`
+    - 特殊标签：`top250`(豆瓣Top250榜单)
+- `pageSize` (query string, 可选): 每页数量，默认16，取值范围1-100
+- `pageStart` (query string, 可选): 起始位置，默认0，用于分页
+
+**参数验证规则**:
+- `type` 必须是 `tv` 或 `movie`
+- `pageSize` 必须在 1-100 之间
+- `pageStart` 不能小于 0
+- `tag` 为 `top250` 时会调用特殊的Top250接口
 
 **响应**:
 ```json
@@ -345,41 +356,253 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 ---
 
-### 4.2 豆瓣分类
+### 4.2 豆瓣分类详情
 
 **接口**: `GET /api/douban/categories`
 
-**描述**: 获取豆瓣影视分类
+**描述**: 获取豆瓣影视分类的详细数据，支持多维度筛选
+
+**请求参数**:
+- `kind` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
+- `category` (query string, 必需): 主分类，如 `热门`、`最新`、`经典` 等
+- `type` (query string, 必需): 子分类类型，根据 `kind` 不同而有所区别
+- `limit` (query string, 可选): 每页数量，默认20，取值范围1-100
+- `start` (query string, 可选): 起始位置，默认0，用于分页
+
+**参数验证规则**:
+- `kind` 必须是 `tv`、`movie`、`anime` 或 `show`
+- `category` 和 `type` 参数不能为空
+- `limit` 必须在 1-100 之间
+- `start` 不能小于 0
+
+**常用参数组合示例**:
+- 电视剧热门：`kind=tv&category=热门&type=热门`
+- 电影最新：`kind=movie&category=最新&type=最新`
+- 电视剧美剧：`kind=tv&category=美剧&type=美剧`
 
 **响应**:
 ```json
 {
-  "tv": ["热门", "美剧", "英剧", "韩剧"],
-  "movie": ["热门", "最新", "经典", "豆瓣高分"]
-}
-```
-
----
-
-### 4.3 豆瓣推荐
-
-**接口**: `GET /api/douban/recommends`
-
-**描述**: 获取豆瓣推荐内容
-
-**响应**:
-```json
-{
-  "recommends": [
+  "code": 200,
+  "message": "获取成功",
+  "list": [
     {
       "id": "string",
-      "title": "string", 
+      "title": "string",
       "poster": "string",
       "rate": "string",
-      "category": "string"
+      "year": "string"
     }
   ]
 }
+```
+
+**特殊说明**:
+- 此接口返回的是具体影视数据，而非分类列表
+- 支持从 `card_subtitle` 字段提取年份信息
+- 图片优先使用 `normal` 尺寸，回退到 `large` 尺寸
+
+---
+
+### 4.3 豆瓣智能推荐
+
+**接口**: `GET /api/douban/recommends`
+
+**描述**: 获取豆瓣个性化推荐内容，支持多维度筛选和排序
+
+**请求参数**:
+- `kind` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
+- `limit` (query string, 可选): 每页数量，默认20，取值范围1-100
+- `start` (query string, 可选): 起始位置，默认0，用于分页
+- `category` (query string, 可选): 主分类筛选，`all` 表示不限制
+- `format` (query string, 可选): 形式筛选，如 `电影`、`电视剧` 等，`all` 表示不限制
+- `region` (query string, 可选): 地区筛选，如 `美国`、`韩国`、`日本` 等，`all` 表示不限制
+- `year` (query string, 可选): 年份筛选，如 `2023`、`2022` 等，`all` 表示不限制
+- `platform` (query string, 可选): 平台筛选，如 `Netflix`、`HBO` 等，`all` 表示不限制
+- `sort` (query string, 可选): 排序方式，`T` 表示默认排序，其他值为自定义排序
+- `label` (query string, 可选): 标签筛选，如 `高分`、`热门` 等，`all` 表示不限制
+
+**参数处理规则**:
+- 所有 `all` 值在内部会被转换为空字符串
+- `sort` 参数值为 `T` 时会被转换为空字符串（使用默认排序）
+- 筛选条件会组合成 `selected_categories` 对象传递给豆瓣API
+- 多个筛选条件会通过 `tags` 参数组合传递
+
+**常用参数组合示例**:
+- 最新电影推荐：`kind=movie&category=最新&limit=20`
+- 美剧推荐：`kind=tv&region=美国&format=美剧`
+- 2023年高分电影：`kind=movie&year=2023&label=高分&sort=score`
+- Netflix内容：`kind=movie&platform=Netflix&limit=30`
+- 日本动漫推荐：`kind=anime&region=日本&category=热门&limit=20`
+- 国产综艺推荐：`kind=show&region=中国&category=热门&format=综艺&limit=15`
+- 番剧推荐：`kind=anime&format=电视剧&category=番剧&limit=25`
+
+**响应**:
+```json
+{
+  "code": 200,
+  "message": "获取成功",
+  "list": [
+    {
+      "id": "string",
+      "title": "string",
+      "poster": "string",
+      "rate": "string",
+      "year": "string"
+    }
+  ]
+}
+```
+
+**特殊说明**:
+- 接口会自动过滤只保留 `movie` 和 `tv` 类型的内容
+- 支持复杂的筛选条件组合，可实现精准推荐
+- 内部使用豆瓣推荐算法，结果具有个性化特征
+- 评分格式化为一位小数显示
+
+---
+
+## 豆瓣接口使用场景和参数配合关系
+
+### 4.4 接口选择指南
+
+#### 场景1：获取基础分类内容
+**推荐接口**: `GET /api/douban`
+**适用情况**:
+- 首页展示热门内容
+- 简单的分类浏览
+- 获取Top250榜单
+- 快速加载和缓存
+
+**参数配合示例**:
+```bash
+# 热门电影
+/api/douban?type=movie&tag=热门&pageSize=20
+
+# 豆瓣Top250电影
+/api/douban?type=movie&tag=top250&pageSize=50&pageStart=0
+
+# 热门美剧
+/api/douban?type=tv&tag=美剧&pageSize=16
+
+# 热门动漫
+/api/douban?type=anime&tag=热门&pageSize=16
+
+# 日本动漫
+/api/douban?type=anime&tag=日本&pageSize=20
+
+# 热门综艺
+/api/douban?type=show&tag=热门&pageSize=16
+
+# 韩国综艺
+/api/douban?type=show&tag=韩国&pageSize=20
+```
+
+#### 场景2：详细分类浏览
+**推荐接口**: `GET /api/douban/categories`
+**适用情况**:
+- 分类页面详细展示
+- 需要更精确的分类筛选
+- 获取包含年份信息的完整数据
+- 分页浏览大量内容
+
+**参数配合示例**:
+```bash
+# 最新电影分页
+/api/douban/categories?kind=movie&category=最新&type=最新&limit=20&start=0
+
+# 国产剧详情
+/api/douban/categories?kind=tv&category=国产剧&type=国产剧&limit=30&start=40
+
+# 经典电影
+/api/douban/categories?kind=movie&category=经典&type=经典&limit=25&start=0
+```
+
+#### 场景3：个性化推荐
+**推荐接口**: `GET /api/douban/recommends`
+**适用情况**:
+- 个性化推荐页面
+- 复杂筛选条件组合
+- 地区、平台、年份等多维度筛选
+- 获取高质量推荐内容
+
+**参数配合示例**:
+```bash
+# 2023年高分电影推荐
+/api/douban/recommends?kind=movie&year=2023&label=高分&sort=score&limit=20
+
+# Netflix美剧推荐
+/api/douban/recommends?kind=tv&platform=Netflix&region=美国&limit=15
+
+# 最新韩剧推荐
+/api/douban/recommends?kind=tv&region=韩国&category=最新&format=韩剧&limit=25
+
+# 综合筛选推荐
+/api/douban/recommends?kind=movie&region=美国&year=2023&label=高分&platform=HBO&limit=30
+```
+
+### 4.5 参数配合最佳实践
+
+#### 分页策略
+- **首页/推荐页**: 使用较小的 `pageSize` (16-20)，快速加载
+- **分类页**: 使用中等 `pageSize` (20-30)，平衡加载速度和内容量
+- **搜索结果**: 使用较大 `pageSize` (50-100)，减少翻页次数
+
+#### 缓存优化
+- **热门内容**: 缓存时间较长，适合首页展示
+- **最新内容**: 缓存时间较短，保证实时性
+- **Top250**: 长期缓存，内容相对稳定
+
+#### 错误处理
+- 参数验证失败会返回400状态码和具体错误信息
+- 豆瓣API超时时间为10秒
+- 网络错误会返回500状态码和错误详情
+
+#### 性能优化建议
+1. **合理使用分页**: 避免一次加载过多数据
+2. **选择合适的接口**: 根据场景选择最适合的接口
+3. **参数验证**: 前端预先验证参数格式
+4. **缓存策略**: 根据内容特性设置不同的缓存时间
+
+### 4.6 实际应用示例
+
+#### 首页内容加载流程
+```javascript
+// 1. 加载热门电影
+GET /api/douban?type=movie&tag=热门&pageSize=16
+
+// 2. 加载热门电视剧  
+GET /api/douban?type=tv&tag=热门&pageSize=16
+
+// 3. 加载热门动漫
+GET /api/douban?type=anime&tag=热门&pageSize=16
+
+// 4. 加载热门综艺
+GET /api/douban?type=show&tag=热门&pageSize=16
+
+// 5. 加载个性化推荐
+GET /api/douban/recommends?kind=movie&limit=10&start=0
+```
+
+#### 分类页面加载流程
+```javascript
+// 1. 加载分类列表
+GET /api/douban/categories?kind=movie&category=动作&type=动作&limit=20&start=0
+
+// 2. 加载更多内容
+GET /api/douban/categories?kind=movie&category=动作&type=动作&limit=20&start=20
+
+// 3. 加载相关推荐
+GET /api/douban/recommends?kind=movie&category=动作&limit=10
+```
+
+#### 搜索结果页推荐
+```javascript
+// 搜索无结果时的推荐
+GET /api/douban/recommends?kind=movie&label=高分&limit=20
+
+// 搜索有结果时的相关推荐
+GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 ```
 
 ---
@@ -403,7 +626,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
     {
       "name": "CCTV1",
       "url": "string",
-      "logo": "string", 
+      "logo": "string",
       "group": "央视",
       "tvg-id": "cctv1"
     }
@@ -434,7 +657,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
     "programs": [
       {
         "start": "2023-01-01 08:00:00",
-        "stop": "2023-01-01 09:00:00", 
+        "stop": "2023-01-01 09:00:00",
         "title": "新闻联播",
         "desc": "节目描述"
       }
@@ -466,7 +689,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "sites": [
     {
       "key": "string",
-      "name": "string", 
+      "name": "string",
       "type": 1,
       "api": "string",
       "searchable": 1,
@@ -633,7 +856,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 ```json
 {
   "SiteName": "string",
-  "Announcement": "string", 
+  "Announcement": "string",
   "SearchDownstreamMaxPage": 5,
   "SiteInterfaceCacheTime": 300,
   "DoubanProxyType": "string",
@@ -668,7 +891,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **支持的操作**:
 - `add`: 添加用户
-- `ban`/`unban`: 封禁/解封用户  
+- `ban`/`unban`: 封禁/解封用户
 - `setAdmin`/`cancelAdmin`: 设置/取消管理员
 - `changePassword`: 修改密码
 - `deleteUser`: 删除用户
@@ -693,7 +916,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "action": "add|disable|enable|delete|sort|batch_disable|batch_enable|batch_delete",
   "key": "string",
   "name": "string",
-  "api": "string", 
+  "api": "string",
   "detail": "string",
   "keys": ["key1", "key2"],
   "order": ["key1", "key2", "key3"]
@@ -724,7 +947,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "key": "string",
   "name": "string",
   "url": "string",
-  "ua": "string", 
+  "ua": "string",
   "epg": "string",
   "order": ["key1", "key2"]
 }
@@ -767,7 +990,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   },
   "hasUpdate": false,
   "remote": {
-    "version": "string", 
+    "version": "string",
     "timestamp": 1234567890
   },
   "timestamp": 1234567890
