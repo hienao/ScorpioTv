@@ -70,4 +70,17 @@ interface UserRepository {
      * @return 服务器地址
      */
     suspend fun getServerUrl(): String?
+    
+    /**
+     * 保存认证Cookie
+     * @param authCookie 认证Cookie
+     * @return 保存结果
+     */
+    suspend fun saveAuthCookie(authCookie: String): Result<Unit>
+    
+    /**
+     * 获取认证Cookie
+     * @return 认证Cookie
+     */
+    suspend fun getAuthCookie(): String?
 }

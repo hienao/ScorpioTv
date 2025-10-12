@@ -6,6 +6,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import android.content.Context
 import com.hienao.scorpiotv.ScorpioTvApplication
 import com.hienao.scorpiotv.data.network.ApiService
+import com.hienao.scorpiotv.data.network.DoubanApiService
+import com.hienao.scorpiotv.data.network.KtorClient
 import com.hienao.scorpiotv.data.network.NetworkClient
 import com.hienao.scorpiotv.data.repository.DoubanRepositoryImpl
 import com.hienao.scorpiotv.data.repository.MediaRepositoryImpl
@@ -14,10 +16,12 @@ import com.hienao.scorpiotv.domain.repository.DoubanRepository
 import com.hienao.scorpiotv.domain.repository.MediaRepository
 import com.hienao.scorpiotv.domain.repository.UserRepository
 import com.hienao.scorpiotv.presentation.screen.home.HomeViewModel
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import kotlin.coroutines.CoroutineContext
 
@@ -54,10 +58,12 @@ val dataModule = module {
         )
     }
     
-    // 豆瓣仓库实现
+    // 豆瓣仓库实现 - 添加UserRepository依赖
     single<DoubanRepository> {
         DoubanRepositoryImpl(
             apiService = get(),
+            doubanApiService = get(),
+            userRepository = get(),
             ioDispatcher = get()
         )
     }
@@ -82,19 +88,41 @@ val useCaseModule = module {
 }
 
 val networkModule = module {
-    // Ktor HttpClient
-    single {
+    // 需要认证的HttpClient - 用于登录、搜索等需要认证的接口
+    single<HttpClient>(named("auth")) {
         NetworkClient.createHttpClient(
             enableLogging = true,
-            timeout = 30_000L
+            timeout = 30_000L,
+            storeCookies = true
         )
     }
     
-    // KtorClient 封装
-    single { com.hienao.scorpiotv.data.network.KtorClient(get()) }
+    // 公开API的HttpClient - 不携带Cookie，用于豆瓣接口等公开API
+    single<HttpClient>(named("public")) {
+        NetworkClient.createHttpClient(
+            enableLogging = true,
+            timeout = 30_000L,
+            storeCookies = false
+        )
+    }
     
-    // API Service
+    // 默认HttpClient - 使用认证版本，保持向后兼容
+    single<HttpClient> { get<HttpClient>(named("auth")) }
+    
+    // KtorClient 封装 - 使用认证版本
+    single { KtorClient(get()) }
+    
+    // 认证API的KtorClient - 携带Cookie
+    single<KtorClient>(named("auth")) { KtorClient(get(named("auth"))) }
+    
+    // 公开API的KtorClient - 不携带Cookie
+    single<KtorClient>(named("public")) { KtorClient(get(named("public"))) }
+    
+    // API Service - 使用认证版本
     single { ApiService(get()) }
+    
+    // 豆瓣API Service - 使用认证版本，携带Cookie（根据API文档，豆瓣接口需要认证）
+    single { DoubanApiService(get(named("auth"))) }
 }
 
 val databaseModule = module {

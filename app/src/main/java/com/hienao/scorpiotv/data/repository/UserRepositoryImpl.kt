@@ -35,6 +35,7 @@ class UserRepositoryImpl(
         private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
         private val SERVER_URL_KEY = stringPreferencesKey("server_url")
         private val LOGIN_TIME_KEY = stringPreferencesKey("login_time")
+        private val AUTH_COOKIE_KEY = stringPreferencesKey("auth_cookie")
     }
 
     override suspend fun login(request: LoginRequest): Result<LoginResponse> = withContext(dispatcher) {
@@ -199,5 +200,20 @@ class UserRepositoryImpl(
 
     override suspend fun getServerUrl(): String? {
         return dataStore.data.first()[SERVER_URL_KEY]
+    }
+
+    override suspend fun saveAuthCookie(authCookie: String): Result<Unit> = withContext(dispatcher) {
+        try {
+            dataStore.edit { preferences ->
+                preferences[AUTH_COOKIE_KEY] = authCookie
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getAuthCookie(): String? {
+        return dataStore.data.first()[AUTH_COOKIE_KEY]
     }
 }

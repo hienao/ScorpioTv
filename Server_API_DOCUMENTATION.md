@@ -11,6 +11,33 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 - **签名验证**: 使用 HMAC-SHA256 对用户名进行签名验证
 - **角色权限**: 支持三种角色 - `owner`(站长)、`admin`(管理员)、`user`(普通用户)
 
+### Cookie格式说明
+需要认证的接口必须在请求头中包含 `auth` cookie，格式如下：
+```
+Cookie: auth={"username":"用户名","password":"密码","signature":"签名","timestamp":时间戳}
+```
+
+**Cookie字段说明**:
+- `username`: 用户名（数据库模式必需）
+- `password`: 密码（必需）
+- `signature`: HMAC-SHA256签名，用于验证请求合法性
+- `timestamp`: 时间戳，用于防止重放攻击
+
+**公开接口列表**（无需认证）:
+- 直播接口：`/api/live/*`
+- TVBox配置接口：`/api/tvbox/config`
+- TVBox诊断接口：`/api/tvbox/diagnose`
+- 代理接口：`/api/proxy/*`
+- 系统配置接口：`/api/server-config`
+- 版本检查接口：`/api/version/check`
+
+**需要认证的接口**:
+- 豆瓣数据接口：`/api/douban/*`
+- 搜索接口：`/api/search/*`
+- 用户数据接口：`/api/favorites/*`, `/api/playrecords/*`, `/api/searchhistory/*`
+- 管理员接口：`/api/admin/*`
+- 认证接口：`/api/login`, `/api/logout`, `/api/change-password`
+
 ### 存储模式
 - **LocalStorage模式**: 仅使用固定密码验证，适合个人使用
 - **数据库模式**: 支持多用户，使用用户名+密码验证
@@ -78,7 +105,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 修改用户密码（仅数据库模式）
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 ```json
@@ -111,7 +138,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 搜索影视资源
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 - `q` (query string): 搜索关键词
@@ -122,7 +149,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "results": [
     {
       "vod_id": "string",
-      "vod_name": "string",
+      "vod_name": "string", 
       "vod_pic": "string",
       "vod_remarks": "string",
       "type_name": "string",
@@ -146,7 +173,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 获取影视资源详细信息
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 - `id` (query string): 影视ID
@@ -157,7 +184,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 {
   "vod_id": "string",
   "vod_name": "string",
-  "vod_pic": "string",
+  "vod_pic": "string", 
   "vod_content": "string",
   "vod_play_from": "string",
   "vod_play_url": "string",
@@ -173,7 +200,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 获取搜索关键词建议
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 - `q` (query string): 搜索关键词前缀
@@ -199,7 +226,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 管理用户搜索历史
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 #### GET - 获取搜索历史
 **响应**:
@@ -229,7 +256,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 管理用户收藏
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 #### GET - 获取收藏
 **请求参数**:
@@ -240,7 +267,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 {
   "source+id": {
     "title": "string",
-    "poster": "string",
+    "poster": "string", 
     "source_name": "string",
     "save_time": 1234567890
   }
@@ -273,7 +300,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 管理用户播放记录
 
-**认证**: 需要登录
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 #### GET - 获取播放记录
 **响应**:
@@ -282,7 +309,7 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
   "source+id": {
     "title": "string",
     "poster": "string",
-    "source_name": "string",
+    "source_name": "string", 
     "index": 1,
     "progress": 300,
     "save_time": 1234567890
@@ -320,14 +347,16 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 
 **描述**: 获取豆瓣影视数据，支持标签分类和Top250榜单
 
+**认证**: 需要登录（通过Cookie中的auth字段）
+
 **请求参数**:
 - `type` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
 - `tag` (query string, 必需): 标签分类，常用值：
-    - 电视剧：`热门`、`美剧`、`英剧`、`韩剧`、`日剧`、`国产剧`
-    - 电影：`热门`、`最新`、`经典`、`豆瓣高分`、`喜剧`、`动作`、`爱情`、`科幻`、`悬疑`、`恐怖`、`动画`
-    - 动漫：`热门`、`日本`、`国产`、`欧美`、`番剧`、`动画电影`
-    - 综艺：`热门`、`国产`、`韩国`、`日本`、`欧美`、`音乐`、`真人秀`
-    - 特殊标签：`top250`(豆瓣Top250榜单)
+  - 电视剧：`热门`、`美剧`、`英剧`、`韩剧`、`日剧`、`国产剧`
+  - 电影：`热门`、`最新`、`经典`、`豆瓣高分`、`喜剧`、`动作`、`爱情`、`科幻`、`悬疑`、`恐怖`、`动画`
+  - 动漫：`热门`、`日本`、`国产`、`欧美`、`番剧`、`动画电影`
+  - 综艺：`热门`、`国产`、`韩国`、`日本`、`欧美`、`音乐`、`真人秀`
+  - 特殊标签：`top250`(豆瓣Top250榜单)
 - `pageSize` (query string, 可选): 每页数量，默认16，取值范围1-100
 - `pageStart` (query string, 可选): 起始位置，默认0，用于分页
 
@@ -361,6 +390,8 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 **接口**: `GET /api/douban/categories`
 
 **描述**: 获取豆瓣影视分类的详细数据，支持多维度筛选
+
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 - `kind` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
@@ -409,6 +440,8 @@ DecoTV 是一个基于 Next.js 的影视资源聚合网站，提供影视搜索�
 **接口**: `GET /api/douban/recommends`
 
 **描述**: 获取豆瓣个性化推荐内容，支持多维度筛选和排序
+
+**认证**: 需要登录（通过Cookie中的auth字段）
 
 **请求参数**:
 - `kind` (query string, 必需): 影视类型，可选值：`tv`(电视剧)、`movie`(电影)、`anime`(动漫)、`show`(综艺)
@@ -615,6 +648,8 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 
 **描述**: 获取直播频道列表
 
+**认证**: 无需认证（公开接口）
+
 **请求参数**:
 - `source` (query string): 直播源标识
 
@@ -626,7 +661,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
     {
       "name": "CCTV1",
       "url": "string",
-      "logo": "string",
+      "logo": "string", 
       "group": "央视",
       "tvg-id": "cctv1"
     }
@@ -641,6 +676,8 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 **接口**: `GET /api/live/epg`
 
 **描述**: 获取频道节目单
+
+**认证**: 无需认证（公开接口）
 
 **请求参数**:
 - `source` (query string): 直播源标识
@@ -657,7 +694,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
     "programs": [
       {
         "start": "2023-01-01 08:00:00",
-        "stop": "2023-01-01 09:00:00",
+        "stop": "2023-01-01 09:00:00", 
         "title": "新闻联播",
         "desc": "节目描述"
       }
@@ -676,6 +713,8 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 
 **描述**: 生成TVBox订阅配置
 
+**认证**: 无需认证（公开接口）
+
 **请求参数**:
 - `format` (query string, 可选): 格式 `json` 或 `base64`，默认json
 - `mode` (query string, 可选): 模式 `safe`、`min`、`yingshicang`、`fast`
@@ -689,7 +728,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
   "sites": [
     {
       "key": "string",
-      "name": "string",
+      "name": "string", 
       "type": 1,
       "api": "string",
       "searchable": 1,
@@ -856,7 +895,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 ```json
 {
   "SiteName": "string",
-  "Announcement": "string",
+  "Announcement": "string", 
   "SearchDownstreamMaxPage": 5,
   "SiteInterfaceCacheTime": 300,
   "DoubanProxyType": "string",
@@ -891,7 +930,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
 
 **支持的操作**:
 - `add`: 添加用户
-- `ban`/`unban`: 封禁/解封用户
+- `ban`/`unban`: 封禁/解封用户  
 - `setAdmin`/`cancelAdmin`: 设置/取消管理员
 - `changePassword`: 修改密码
 - `deleteUser`: 删除用户
@@ -916,7 +955,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
   "action": "add|disable|enable|delete|sort|batch_disable|batch_enable|batch_delete",
   "key": "string",
   "name": "string",
-  "api": "string",
+  "api": "string", 
   "detail": "string",
   "keys": ["key1", "key2"],
   "order": ["key1", "key2", "key3"]
@@ -947,7 +986,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
   "key": "string",
   "name": "string",
   "url": "string",
-  "ua": "string",
+  "ua": "string", 
   "epg": "string",
   "order": ["key1", "key2"]
 }
@@ -990,7 +1029,7 @@ GET /api/douban/recommends?kind=movie&category=相关类型&limit=15
   },
   "hasUpdate": false,
   "remote": {
-    "version": "string",
+    "version": "string", 
     "timestamp": 1234567890
   },
   "timestamp": 1234567890
