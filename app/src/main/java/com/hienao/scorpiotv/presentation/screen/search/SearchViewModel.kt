@@ -2,6 +2,7 @@ package com.hienao.scorpiotv.presentation.screen.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hienao.scorpiotv.data.network.ApiResult
 import com.hienao.scorpiotv.domain.model.DoubanItem
 import com.hienao.scorpiotv.domain.repository.DoubanRepository
 import kotlinx.coroutines.flow.*
@@ -57,21 +58,36 @@ class SearchViewModel(
             _uiState.update { it.copy(isLoading = true, error = null, hasSearched = true) }
 
             try {
-                val result = doubanRepository.searchMedia(query)
-                result.onSuccess { items ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            searchResults = items,
-                            currentPage = 1
-                        )
-                    }
-                }.onFailure { exception ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = exception.message ?: "搜索失败"
-                        )
+                // 使用推荐接口代替搜索功能
+                val result = doubanRepository.getDoubanRecommends(
+                    kind = "movie",
+                    limit = 20,
+                    start = 0,
+                    label = query
+                )
+                
+                result.collect { apiResult ->
+                    when (apiResult) {
+                        is ApiResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    searchResults = apiResult.data,
+                                    currentPage = 1
+                                )
+                            }
+                        }
+                        is ApiResult.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    error = apiResult.message ?: "搜索失败"
+                                )
+                            }
+                        }
+                        is ApiResult.Loading -> {
+                            // 已经在上面设置了loading状态
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -134,19 +150,34 @@ class SearchViewModel(
 
         viewModelScope.launch {
             try {
-                val result = doubanRepository.searchMedia(currentState.searchQuery)
-                result.onSuccess { newItems ->
-                    _uiState.update {
-                        it.copy(
-                            searchResults = it.searchResults + newItems,
-                            currentPage = nextPage
-                        )
-                    }
-                }.onFailure { exception ->
-                    _uiState.update {
-                        it.copy(
-                            error = exception.message ?: "加载更多失败"
-                        )
+                // 使用推荐接口代替搜索功能
+                val result = doubanRepository.getDoubanRecommends(
+                    kind = "movie",
+                    limit = 20,
+                    start = (nextPage - 1) * 20,
+                    label = currentState.searchQuery
+                )
+                
+                result.collect { apiResult ->
+                    when (apiResult) {
+                        is ApiResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    searchResults = it.searchResults + apiResult.data,
+                                    currentPage = nextPage
+                                )
+                            }
+                        }
+                        is ApiResult.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    error = apiResult.message ?: "加载更多失败"
+                                )
+                            }
+                        }
+                        is ApiResult.Loading -> {
+                            // 处理中
+                        }
                     }
                 }
             } catch (e: Exception) {

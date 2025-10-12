@@ -2,19 +2,25 @@ package com.hienao.scorpiotv.data.repository
 
 import com.hienao.scorpiotv.data.network.ApiResult
 import com.hienao.scorpiotv.data.network.ApiService
-import com.hienao.scorpiotv.domain.model.DoubanFilter
+import com.hienao.scorpiotv.data.network.DoubanItemDto
+import com.hienao.scorpiotv.data.network.DoubanRecommendCategoriesResponse
+import com.hienao.scorpiotv.data.network.DoubanResponseDto
 import com.hienao.scorpiotv.domain.model.DoubanItem
-import com.hienao.scorpiotv.domain.model.DoubanResponse
+import com.hienao.scorpiotv.domain.model.DoubanRecommendCategories
+import com.hienao.scorpiotv.domain.model.MovieFilterState
+import com.hienao.scorpiotv.domain.model.SortOption
 import com.hienao.scorpiotv.domain.repository.DoubanRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlin.coroutines.CoroutineContext
 
 /**
  * 豆瓣数据仓库实现类
  */
 class DoubanRepositoryImpl(
     private val apiService: ApiService,
-    private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineContext
 ) : DoubanRepository {
 
     override suspend fun getDoubanData(
@@ -22,41 +28,35 @@ class DoubanRepositoryImpl(
         tag: String,
         pageSize: Int,
         pageStart: Int
-    ): Result<DoubanResponse> = withContext(dispatcher) {
+    ): Flow<ApiResult<List<DoubanItem>>> = flow {
+        emit(ApiResult.Loading)
+        
         try {
-            val result = apiService.getDoubanData(type, tag, pageSize, pageStart)
+            val result = apiService.getDoubanData(
+                type = type,
+                tag = tag,
+                pageSize = pageSize,
+                pageStart = pageStart
+            )
             
-            when (result) {
-                is ApiResult.Success -> {
-                    val response = DoubanResponse(
-                        code = result.data.code,
-                        message = result.data.message,
-                        items = result.data.list.map { dto ->
-                            DoubanItem(
-                                id = dto.id,
-                                title = dto.title,
-                                poster = dto.poster,
-                                rate = dto.rate,
-                                year = dto.year,
-                                type = type
-                            )
-                        },
-                        total = result.data.list.size,
-                        hasMore = result.data.list.size == pageSize
+            result.onSuccess { response ->
+                val doubanItems = response.list.map { dto ->
+                    DoubanItem(
+                        id = dto.id,
+                        title = dto.title,
+                        poster = dto.poster,
+                        rate = dto.rate,
+                        year = dto.year
                     )
-                    Result.success(response)
                 }
-                is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "获取豆瓣数据失败"))
-                }
-                is ApiResult.Loading -> {
-                    Result.failure(Exception("加载中..."))
-                }
+                emit(ApiResult.Success(doubanItems))
+            }.onError { exception, message, code ->
+                emit(ApiResult.Error(exception, message, code))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            emit(ApiResult.Error(e, e.message))
         }
-    }
+    }.flowOn(ioDispatcher)
 
     override suspend fun getDoubanCategories(
         kind: String,
@@ -64,42 +64,36 @@ class DoubanRepositoryImpl(
         type: String,
         limit: Int,
         start: Int
-    ): Result<DoubanResponse> = withContext(dispatcher) {
+    ): Flow<ApiResult<List<DoubanItem>>> = flow {
+        emit(ApiResult.Loading)
+        
         try {
-            val result = apiService.getDoubanCategories(kind, category, type, limit, start)
+            val result = apiService.getDoubanCategories(
+                kind = kind,
+                category = category,
+                type = type,
+                limit = limit,
+                start = start
+            )
             
-            when (result) {
-                is ApiResult.Success -> {
-                    val response = DoubanResponse(
-                        code = result.data.code,
-                        message = result.data.message,
-                        items = result.data.list.map { dto ->
-                            DoubanItem(
-                                id = dto.id,
-                                title = dto.title,
-                                poster = dto.poster,
-                                rate = dto.rate,
-                                year = dto.year,
-                                type = kind,
-                                subtype = type
-                            )
-                        },
-                        total = result.data.list.size,
-                        hasMore = result.data.list.size == limit
+            result.onSuccess { response ->
+                val doubanItems = response.list.map { dto ->
+                    DoubanItem(
+                        id = dto.id,
+                        title = dto.title,
+                        poster = dto.poster,
+                        rate = dto.rate,
+                        year = dto.year
                     )
-                    Result.success(response)
                 }
-                is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "获取豆瓣分类数据失败"))
-                }
-                is ApiResult.Loading -> {
-                    Result.failure(Exception("加载中..."))
-                }
+                emit(ApiResult.Success(doubanItems))
+            }.onError { exception, message, code ->
+                emit(ApiResult.Error(exception, message, code))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            emit(ApiResult.Error(e, e.message))
         }
-    }
+    }.flowOn(ioDispatcher)
 
     override suspend fun getDoubanRecommends(
         kind: String,
@@ -112,123 +106,67 @@ class DoubanRepositoryImpl(
         platform: String?,
         sort: String?,
         label: String?
-    ): Result<DoubanResponse> = withContext(dispatcher) {
+    ): Flow<ApiResult<List<DoubanItem>>> = flow {
+        emit(ApiResult.Loading)
+        
         try {
-            val result = apiService.getDoubanCategories(
+            val result = apiService.getDoubanRecommends(
                 kind = kind,
-                category = category ?: "热门",
-                type = format ?: "热门",
                 limit = limit,
-                start = start
+                start = start,
+                category = category,
+                format = format,
+                region = region,
+                year = year,
+                platform = platform,
+                sort = sort,
+                label = label
             )
             
-            when (result) {
-                is ApiResult.Success -> {
-                    val response = DoubanResponse(
-                        code = result.data.code,
-                        message = result.data.message,
-                        items = result.data.list.map { dto ->
-                            DoubanItem(
-                                id = dto.id,
-                                title = dto.title,
-                                poster = dto.poster,
-                                rate = dto.rate,
-                                year = dto.year,
-                                type = kind,
-                                subtype = format ?: ""
-                            )
-                        },
-                        total = result.data.list.size,
-                        hasMore = result.data.list.size == limit
+            result.onSuccess { response ->
+                val doubanItems = response.list.map { dto ->
+                    DoubanItem(
+                        id = dto.id,
+                        title = dto.title,
+                        poster = dto.poster,
+                        rate = dto.rate,
+                        year = dto.year
                     )
-                    Result.success(response)
                 }
-                is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "获取豆瓣推荐数据失败"))
-                }
-                is ApiResult.Loading -> {
-                    Result.failure(Exception("加载中..."))
-                }
+                emit(ApiResult.Success(doubanItems))
+            }.onError { exception, message, code ->
+                emit(ApiResult.Error(exception, message, code))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            emit(ApiResult.Error(e, e.message))
         }
-    }
+    }.flowOn(ioDispatcher)
 
-    override suspend fun getDataByFilter(filter: DoubanFilter): Result<DoubanResponse> {
-        return if (filter.tag == "top250") {
-            getTop250Data(filter.type, filter.limit, filter.start)
-        } else {
-            getDoubanData(filter.type, filter.tag, filter.limit, filter.start)
-        }
-    }
-
-    override suspend fun searchMedia(query: String): Result<List<DoubanItem>> = withContext(dispatcher) {
+    override suspend fun getDoubanRecommendCategories(
+        kind: String
+    ): Flow<ApiResult<DoubanRecommendCategories>> = flow {
+        emit(ApiResult.Loading)
+        
         try {
-            val result = apiService.searchMedia(query)
+            val result = apiService.getDoubanRecommendCategories(kind)
             
-            when (result) {
-                is ApiResult.Success -> {
-                    val items = result.data.results.map { dto ->
-                        DoubanItem(
-                            id = dto.vod_id,
-                            title = dto.vod_name,
-                            poster = dto.vod_pic,
-                            rate = dto.vod_remarks,
-                            year = "",
-                            type = dto.type_name,
-                            subtype = dto.source_name
+            result.onSuccess { response ->
+                val recommendCategories = DoubanRecommendCategories(
+                    types = response.recommend_categories.types,
+                    regions = response.recommend_categories.regions,
+                    sorts = response.sorts.map { sort ->
+                        SortOption(
+                            value = sort.value,
+                            label = sort.label
                         )
                     }
-                    Result.success(items)
-                }
-                is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "搜索失败"))
-                }
-                is ApiResult.Loading -> {
-                    Result.failure(Exception("搜索中..."))
-                }
+                )
+                emit(ApiResult.Success(recommendCategories))
+            }.onError { exception, message, code ->
+                emit(ApiResult.Error(exception, message, code))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            emit(ApiResult.Error(e, e.message))
         }
-    }
-
-    override suspend fun getMediaDetail(id: String, source: String): Result<DoubanItem> = withContext(dispatcher) {
-        try {
-            val result = apiService.getMediaDetail(id, source)
-            
-            when (result) {
-                is ApiResult.Success -> {
-                    val item = DoubanItem(
-                        id = result.data.vod_id,
-                        title = result.data.vod_name,
-                        poster = result.data.vod_pic,
-                        rate = "", // MediaDetailDto中没有vod_remarks字段
-                        year = "",
-                        type = result.data.type_name,
-                        subtype = source
-                    )
-                    Result.success(item)
-                }
-                is ApiResult.Error -> {
-                    Result.failure(Exception(result.message ?: "获取详情失败"))
-                }
-                is ApiResult.Loading -> {
-                    Result.failure(Exception("加载中..."))
-                }
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun getHotData(type: String, limit: Int): Result<List<DoubanItem>> {
-        val result = getDoubanData(type, "热门", limit, 0)
-        return result.map { it.items }
-    }
-
-    override suspend fun getTop250Data(type: String, limit: Int, start: Int): Result<DoubanResponse> {
-        return getDoubanData(type, "top250", limit, start)
-    }
+    }.flowOn(ioDispatcher)
 }

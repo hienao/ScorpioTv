@@ -1,8 +1,9 @@
 package com.hienao.scorpiotv.domain.repository
 
-import com.hienao.scorpiotv.domain.model.DoubanFilter
+import com.hienao.scorpiotv.data.network.ApiResult
 import com.hienao.scorpiotv.domain.model.DoubanItem
-import com.hienao.scorpiotv.domain.model.DoubanResponse
+import com.hienao.scorpiotv.domain.model.DoubanRecommendCategories
+import kotlinx.coroutines.flow.Flow
 
 /**
  * 豆瓣数据仓库接口
@@ -23,7 +24,7 @@ interface DoubanRepository {
         tag: String,
         pageSize: Int = 16,
         pageStart: Int = 0
-    ): Result<DoubanResponse>
+    ): Flow<ApiResult<List<DoubanItem>>>
     
     /**
      * 获取豆瓣分类详情
@@ -40,7 +41,7 @@ interface DoubanRepository {
         type: String,
         limit: Int = 20,
         start: Int = 0
-    ): Result<DoubanResponse>
+    ): Flow<ApiResult<List<DoubanItem>>>
     
     /**
      * 获取豆瓣智能推荐
@@ -67,44 +68,12 @@ interface DoubanRepository {
         platform: String? = null,
         sort: String? = null,
         label: String? = null
-    ): Result<DoubanResponse>
+    ): Flow<ApiResult<List<DoubanItem>>>
     
     /**
-     * 根据筛选条件获取数据
-     * @param filter 筛选条件
-     * @return 豆瓣响应结果
+     * 获取豆瓣推荐分类数据
+     * @param kind 影视类型 (movie, tv, anime, show)
+     * @return 推荐分类数据
      */
-    suspend fun getDataByFilter(filter: DoubanFilter): Result<DoubanResponse>
-    
-    /**
-     * 搜索影视资源
-     * @param query 搜索关键词
-     * @return 搜索结果
-     */
-    suspend fun searchMedia(query: String): Result<List<DoubanItem>>
-    
-    /**
-     * 获取影视详情
-     * @param id 影视ID
-     * @param source 采集源标识
-     * @return 影视详情
-     */
-    suspend fun getMediaDetail(id: String, source: String): Result<DoubanItem>
-    
-    /**
-     * 获取热门数据
-     * @param type 影视类型
-     * @param limit 数量限制
-     * @return 热门数据列表
-     */
-    suspend fun getHotData(type: String, limit: Int = 10): Result<List<DoubanItem>>
-    
-    /**
-     * 获取Top250数据
-     * @param type 影视类型
-     * @param limit 数量限制
-     * @param start 起始位置
-     * @return Top250数据列表
-     */
-    suspend fun getTop250Data(type: String, limit: Int = 50, start: Int = 0): Result<DoubanResponse>
+    suspend fun getDoubanRecommendCategories(kind: String): Flow<ApiResult<DoubanRecommendCategories>>
 }

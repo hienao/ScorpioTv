@@ -2,6 +2,7 @@ package com.hienao.scorpiotv.presentation.screen.media
 
 import com.hienao.scorpiotv.domain.model.DoubanItem
 import com.hienao.scorpiotv.domain.model.DoubanFilter
+import com.hienao.scorpiotv.domain.model.MovieFilterState
 import com.hienao.scorpiotv.presentation.base.BaseContract
 
 /**
@@ -24,7 +25,9 @@ interface MediaContract {
         val hasMore: Boolean = true,
         val currentPage: Int = 0,
         val errorMessage: String? = null,
-        val searchQuery: String = ""
+        val searchQuery: String = "",
+        // 电影页面筛选状态
+        val movieFilterState: MovieFilterState = MovieFilterState()
     ) : BaseContract.UiState
     
     /**
@@ -39,6 +42,14 @@ interface MediaContract {
         data class SelectMediaItem(val item: DoubanItem) : UiIntent()
         object ClearError : UiIntent()
         object Refresh : UiIntent()
+        
+        // 电影页面筛选相关Intent
+        data class SetPrimaryCategory(val category: String) : UiIntent()
+        data class SetFilterType(val filterType: String) : UiIntent()
+        data class SetSelectedType(val type: String) : UiIntent()
+        data class SetSelectedRegion(val region: String) : UiIntent()
+        data class SetSelectedSort(val sort: String) : UiIntent()
+        object LoadRecommendCategories : UiIntent()
     }
     
     /**

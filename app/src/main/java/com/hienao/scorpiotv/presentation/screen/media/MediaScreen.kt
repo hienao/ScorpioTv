@@ -5,17 +5,16 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -33,7 +32,6 @@ fun MediaScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     // 处理UI效果
     viewModel.uiEffect.CollectAsEffect { effect ->
@@ -75,26 +73,58 @@ fun MediaScreen(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 顶部搜索栏和筛选
-        MediaTopBar(
-            searchQuery = uiState.searchQuery,
-            onSearchQueryChange = { query ->
-                // 实时搜索
-            },
-            onSearch = { query ->
-                viewModel.handleIntent(MediaContract.UiIntent.SearchMedia(query))
-            },
-            selectedCategory = uiState.selectedCategory,
-            categories = uiState.categories,
-            onCategorySelected = { category ->
-                viewModel.handleIntent(MediaContract.UiIntent.SelectCategory(category))
-            },
-            onRefresh = {
-                viewModel.handleIntent(MediaContract.UiIntent.Refresh)
-            },
-            isRefreshing = uiState.isRefreshing,
-            mediaTypeDisplayName = viewModel.getCurrentMediaTypeDisplayName()
-        )
+        // 顶部栏和筛选
+        if (uiState.mediaType == "movie") {
+            // 电影页面使用新的筛选组件
+            Column {
+                MediaTopBar(
+                    selectedCategory = uiState.selectedCategory,
+                    categories = uiState.categories,
+                    onCategorySelected = { category ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SelectCategory(category))
+                    },
+                    onRefresh = {
+                        viewModel.handleIntent(MediaContract.UiIntent.Refresh)
+                    },
+                    isRefreshing = uiState.isRefreshing,
+                    mediaTypeDisplayName = viewModel.getCurrentMediaTypeDisplayName()
+                )
+                
+                // 电影页面筛选组件
+                MovieFilterSection(
+                    filterState = uiState.movieFilterState,
+                    onPrimaryCategorySelected = { category ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SetPrimaryCategory(category))
+                    },
+                    onFilterTypeSelected = { filterType ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SetFilterType(filterType))
+                    },
+                    onTypeSelected = { type ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SetSelectedType(type))
+                    },
+                    onRegionSelected = { region ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SetSelectedRegion(region))
+                    },
+                    onSortSelected = { sort ->
+                        viewModel.handleIntent(MediaContract.UiIntent.SetSelectedSort(sort))
+                    }
+                )
+            }
+        } else {
+            // 其他媒体类型使用原有的筛选栏
+            MediaTopBar(
+                selectedCategory = uiState.selectedCategory,
+                categories = uiState.categories,
+                onCategorySelected = { category ->
+                    viewModel.handleIntent(MediaContract.UiIntent.SelectCategory(category))
+                },
+                onRefresh = {
+                    viewModel.handleIntent(MediaContract.UiIntent.Refresh)
+                },
+                isRefreshing = uiState.isRefreshing,
+                mediaTypeDisplayName = viewModel.getCurrentMediaTypeDisplayName()
+            )
+        }
 
         // 内容区域
         Box(modifier = Modifier.fillMaxSize()) {
@@ -159,9 +189,6 @@ fun MediaScreen(
  */
 @Composable
 private fun MediaTopBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onSearch: (String) -> Unit,
     selectedCategory: String,
     categories: List<String>,
     onCategorySelected: (String) -> Unit,
@@ -206,38 +233,7 @@ private fun MediaTopBar(
             }
         }
 
-        // 搜索框
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            placeholder = { Text("搜索${mediaTypeDisplayName}...") },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "搜索"
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotBlank()) {
-                    IconButton(
-                        onClick = { onSearch(searchQuery) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "搜索"
-                        )
-                    }
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = { onSearch(searchQuery) }
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
+        
 
         // 分类筛选
         if (categories.isNotEmpty()) {
