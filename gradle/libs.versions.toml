@@ -38,6 +38,12 @@ ktor = "3.3.1"
 # Coil
 coil = "2.7.0"
 
+# GSYVideoPlayer
+gsyVideoPlayer = "11.1.0"
+
+# DataStore
+datastore = "1.1.2"
+
 # Testing
 mockk = "1.14.6"
 turbine = "1.2.1"
@@ -93,6 +99,14 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Coil
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# GSYVideoPlayer
+gsy-video-player-java = { group = "com.github.CarGuo.GSYVideoPlayer", name = "GSYVideoPlayer-java", version.ref = "gsyVideoPlayer" }
+gsy-video-player-exo2 = { group = "com.github.CarGuo.GSYVideoPlayer", name = "GSYVideoPlayer-exo2", version.ref = "gsyVideoPlayer" }
+gsy-video-player-exo_play3 = { group = "com.github.CarGuo.GSYVideoPlayer", name = "GSYVideoPlayer-exo_play3", version.ref = "gsyVideoPlayer" }
+
+# DataStore
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Testing
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }

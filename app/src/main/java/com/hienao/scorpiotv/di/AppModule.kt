@@ -1,14 +1,24 @@
 package com.hienao.scorpiotv.di
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
+import android.content.Context
+import com.hienao.scorpiotv.ScorpioTvApplication
 import com.hienao.scorpiotv.data.network.ApiService
-import com.hienao.scorpiotv.data.network.KtorClient
 import com.hienao.scorpiotv.data.network.NetworkClient
 import com.hienao.scorpiotv.data.repository.MediaRepositoryImpl
+import com.hienao.scorpiotv.data.repository.UserRepositoryImpl
 import com.hienao.scorpiotv.domain.repository.MediaRepository
+import com.hienao.scorpiotv.domain.repository.UserRepository
 import com.hienao.scorpiotv.presentation.screen.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+
+// DataStore扩展
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
 /**
  * Koin依赖注入模块
@@ -19,6 +29,9 @@ val dataModule = module {
     // 提供IO调度器
     single { Dispatchers.IO }
     
+    // DataStore
+    single<DataStore<Preferences>> { get<Context>().dataStore }
+    
     // 仓库实现
     single<MediaRepository> {
         MediaRepositoryImpl(
@@ -26,11 +39,35 @@ val dataModule = module {
             // 这里可以添加其他依赖，如数据源
         )
     }
+    
+    // 用户仓库实现
+    single<UserRepository> {
+        UserRepositoryImpl(
+            apiService = get(),
+            dataStore = get(),
+            dispatcher = get()
+        )
+    }
+    
+    // 豆瓣仓库实现
+    single<com.hienao.scorpiotv.domain.repository.DoubanRepository> {
+        com.hienao.scorpiotv.data.repository.DoubanRepositoryImpl(
+            apiService = get(),
+            dispatcher = get()
+        )
+    }
 }
 
 val viewModelModule = module {
     // ViewModel定义
     viewModel { HomeViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.login.LoginViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.main.MainViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.media.MediaViewModel(get(), get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.player.PlayerViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.settings.SettingsViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.live.LiveViewModel(get()) }
+    viewModel { com.hienao.scorpiotv.presentation.screen.search.SearchViewModel(get()) }
 }
 
 val useCaseModule = module {
@@ -49,7 +86,7 @@ val networkModule = module {
     }
     
     // KtorClient 封装
-    single { KtorClient(get()) }
+    single { com.hienao.scorpiotv.data.network.KtorClient(get()) }
     
     // API Service
     single { ApiService(get()) }

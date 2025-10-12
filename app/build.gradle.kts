@@ -76,6 +76,9 @@ dependencies {
     implementation(libs.compose.navigation)
     implementation(libs.compose.lifecycle.runtime)
     implementation(libs.compose.lifecycle.viewmodel)
+    
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.7.6")
 
     // Koin
     implementation(libs.koin.core)
@@ -101,6 +104,14 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+
+    // 视频播放器 - 暂时移除以解决网络连接问题
+    // implementation("androidx.media3:media3-exoplayer:1.4.1")
+    // implementation("androidx.media3:media3-ui:1.4.1")
+    // implementation("androidx.media3:media3-common:1.4.1")
+
+    // DataStore
+    implementation(libs.datastore.preferences)
 
     // Testing
     testImplementation(libs.junit)
