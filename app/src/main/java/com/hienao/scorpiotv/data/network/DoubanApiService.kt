@@ -1,6 +1,7 @@
 package com.hienao.scorpiotv.data.network
 
 import kotlinx.serialization.Serializable
+import android.util.Log
 
 /**
  * 豆瓣API服务接口
@@ -38,6 +39,18 @@ class DoubanApiService(private val ktorClient: KtorClient) {
         pageStart: Int = 0,
         authCookie: String? = null
     ): ApiResult<DoubanResponseDto> {
+        // 记录API调用详情
+        Log.d("DoubanApi", "=== 调用豆瓣影视数据API ===")
+        Log.d("DoubanApi", "Base URL: $baseUrl")
+        Log.d("DoubanApi", "完整URL: ${getApiUrl("/api/douban")}")
+        Log.d("DoubanApi", "参数:")
+        Log.d("DoubanApi", "  type: $type")
+        Log.d("DoubanApi", "  tag: $tag")
+        Log.d("DoubanApi", "  pageSize: $pageSize")
+        Log.d("DoubanApi", "  pageStart: $pageStart")
+        Log.d("DoubanApi", "认证状态: ${if (authCookie != null) "已设置Cookie (长度: ${authCookie.length})" else "未设置Cookie"}")
+        Log.d("DoubanApi", "========================")
+        
         return ktorClient.get<DoubanResponseDto>(
             url = getApiUrl("/api/douban"),
             params = mapOf(

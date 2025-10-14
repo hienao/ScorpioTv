@@ -36,25 +36,15 @@ fun MovieFilterSection(
         )
         
         // 第二行条件筛选
-        if (filterState.primaryCategory == "全部") {
-            // 显示类型/地区/排序筛选
-            SecondaryFilterRow(
-                filterTypes = filterState.filterTypes,
-                selectedFilterType = filterState.filterType,
-                onFilterTypeSelected = onFilterTypeSelected,
-                filterState = filterState,
-                onTypeSelected = onTypeSelected,
-                onRegionSelected = onRegionSelected,
-                onSortSelected = onSortSelected
-            )
-        } else {
-            // 显示地区筛选
-            RegionFilterRow(
-                regions = filterState.regionOptions,
-                selectedRegion = filterState.selectedRegion,
-                onRegionSelected = onRegionSelected
-            )
-        }
+        SecondaryFilterRow(
+            filterTypes = filterState.filterTypes,
+            selectedFilterType = filterState.filterType,
+            onFilterTypeSelected = onFilterTypeSelected,
+            filterState = filterState,
+            onTypeSelected = onTypeSelected,
+            onRegionSelected = onRegionSelected,
+            onSortSelected = onSortSelected
+        )
     }
 }
 
@@ -186,34 +176,6 @@ private fun SecondaryFilterRow(
                     }
                 }
             }
-        }
-    }
-}
-
-/**
- * 地区筛选行（当第一行不是全部时显示）
- */
-@Composable
-private fun RegionFilterRow(
-    regions: List<String>,
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit
-) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp)
-    ) {
-        items(regions) { region ->
-            FilterChip(
-                onClick = { onRegionSelected(region) },
-                label = { 
-                    Text(
-                        text = region,
-                        fontSize = 14.sp
-                    )
-                },
-                selected = region == selectedRegion
-            )
         }
     }
 }

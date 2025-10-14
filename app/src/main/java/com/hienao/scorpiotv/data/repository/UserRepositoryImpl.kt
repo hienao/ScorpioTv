@@ -223,7 +223,7 @@ class UserRepositoryImpl(
     }
 
     override suspend fun getAuthCookie(): String? {
-        return dataStore.data.first()[AUTH_COOKIE_KEY]
+        return "auth="+dataStore.data.first()[AUTH_COOKIE_KEY]
     }
     
     /**
