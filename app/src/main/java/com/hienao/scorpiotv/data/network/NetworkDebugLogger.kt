@@ -128,6 +128,160 @@ object NetworkDebugLogger {
     }
     
     /**
+     * 记录图片加载错误的详细调试信息
+     * @param url 图片URL
+     * @param error 错误异常
+     * @param requestHeaders 请求头
+     */
+    fun logImageLoadError(
+        url: String,
+        error: Throwable,
+        requestHeaders: Map<String, String> = emptyMap()
+    ) {
+        val timestamp = dateFormat.format(Date())
+        
+        Log.e("ImageLoadDebug", "🖼️🖼️🖼️ 图片加载错误详细分析 🖼️🖼️🖼️")
+        Log.e("ImageLoadDebug", "时间戳: $timestamp")
+        Log.e("ImageLoadDebug", "==========================================")
+        
+        // 基本信息
+        Log.e("ImageLoadDebug", "📤 图片请求信息:")
+        Log.e("ImageLoadDebug", "  URL: $url")
+        Log.e("ImageLoadDebug", "  错误类型: ${error.javaClass.simpleName}")
+        Log.e("ImageLoadDebug", "  错误信息: ${error.message}")
+        
+        // 请求头
+        if (requestHeaders.isNotEmpty()) {
+            Log.e("ImageLoadDebug", "  请求头:")
+            requestHeaders.forEach { (key, value) ->
+                Log.e("ImageLoadDebug", "    $key: $value")
+            }
+        }
+        
+        // 错误原因分析
+        Log.e("ImageLoadDebug", "🔍 错误原因分析:")
+        when {
+            error is java.net.UnknownHostException -> {
+                Log.e("ImageLoadDebug", "  ❌ 主机名解析失败")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 域名不存在或DNS解析失败")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 检查URL是否正确，检查网络连接")
+            }
+            error is java.net.SocketTimeoutException -> {
+                Log.e("ImageLoadDebug", "  ❌ 请求超时")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 网络慢或服务器响应慢")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 增加超时时间或使用CDN")
+            }
+            error is java.net.ConnectException -> {
+                Log.e("ImageLoadDebug", "  ❌ 连接失败")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 服务器不可达或端口被阻止")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 检查服务器状态和网络配置")
+            }
+            error is java.io.IOException -> {
+                Log.e("ImageLoadDebug", "  ❌ IO异常")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 网络中断或数据传输错误")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 检查网络连接稳定性")
+            }
+            error.message?.contains("404", ignoreCase = true) == true -> {
+                Log.e("ImageLoadDebug", "  ❌ 图片不存在 (404)")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 图片已被删除或URL错误")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 检查图片URL是否正确")
+            }
+            error.message?.contains("403", ignoreCase = true) == true -> {
+                Log.e("ImageLoadDebug", "  ❌ 访问被拒绝 (403)")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 需要认证或权限不足")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 添加认证信息或检查权限")
+            }
+            error.message?.contains("decoding", ignoreCase = true) == true -> {
+                Log.e("ImageLoadDebug", "  ❌ 图片解码失败")
+                Log.e("ImageLoadDebug", "  💡 可能原因: 图片格式不支持或文件损坏")
+                Log.e("ImageLoadDebug", "  💡 解决方案: 检查图片格式，添加更多解码器")
+            }
+            else -> {
+                Log.e("ImageLoadDebug", "  ❌ 未知错误")
+                Log.e("ImageLoadDebug", "  💡 建议: 检查完整的错误堆栈信息")
+            }
+        }
+        
+        // URL分析
+        Log.e("ImageLoadDebug", "🔗 URL分析:")
+        analyzeImageUrl(url)
+        
+        // 调试建议
+        Log.e("ImageLoadDebug", "🛠️ 调试建议:")
+        Log.e("ImageLoadDebug", "  1. 在浏览器中直接访问该URL")
+        Log.e("ImageLoadDebug", "  2. 检查图片是否存在且可访问")
+        Log.e("ImageLoadDebug", "  3. 验证图片格式是否受支持")
+        Log.e("ImageLoadDebug", "  4. 检查网络连接和防火墙设置")
+        Log.e("ImageLoadDebug", "  5. 尝试使用其他图片URL测试")
+        
+        Log.e("ImageLoadDebug", "==========================================")
+        Log.e("ImageLoadDebug", "🖼️🖼️🖼️ 图片加载错误分析结束 🖼️🖼️🖼️")
+    }
+    
+    /**
+     * 分析图片URL
+     */
+    fun analyzeImageUrl(url: String) {
+        Log.e("ImageLoadDebug", "  URL格式分析:")
+        
+        // 检查协议
+        when {
+            url.startsWith("https://") -> Log.e("ImageLoadDebug", "    协议: HTTPS (安全)")
+            url.startsWith("http://") -> Log.e("ImageLoadDebug", "    协议: HTTP (非安全)")
+            else -> Log.e("ImageLoadDebug", "    ⚠️ 协议: 未知或无效")
+        }
+        
+        // 检查域名
+        try {
+            val uri = java.net.URI(url)
+            val host = uri.host
+            if (host != null) {
+                Log.e("ImageLoadDebug", "    域名: $host")
+                
+                // 检查是否是常见的图片托管服务
+                val commonHosts = listOf("imgur.com", "i.imgur.com", "cdn.com", "cloudinary.com", "aws.amazon.com")
+                val isCommonHost = commonHosts.any { host.contains(it) }
+                Log.e("ImageLoadDebug", "    常见图片托管: ${if (isCommonHost) "是" else "否"}")
+            } else {
+                Log.e("ImageLoadDebug", "    ⚠️ 域名: 无法解析")
+            }
+        } catch (e: Exception) {
+            Log.e("ImageLoadDebug", "    ⚠️ 域名解析失败: ${e.message}")
+        }
+        
+        // 检查文件扩展名
+        val imageExtensions = mapOf(
+            ".jpg" to "JPEG",
+            ".jpeg" to "JPEG",
+            ".png" to "PNG",
+            ".gif" to "GIF",
+            ".webp" to "WebP",
+            ".bmp" to "BMP",
+            ".svg" to "SVG"
+        )
+        
+        val hasValidExtension = imageExtensions.any { (ext, format) ->
+            if (url.lowercase().endsWith(ext)) {
+                Log.e("ImageLoadDebug", "    文件格式: $format ($ext)")
+                true
+            } else {
+                false
+            }
+        }
+        
+        if (!hasValidExtension) {
+            Log.e("ImageLoadDebug", "    ⚠️ 文件格式: 未知或无扩展名")
+            Log.e("ImageLoadDebug", "    💡 可能是动态生成的图片URL")
+        }
+        
+        // 检查URL长度
+        Log.e("ImageLoadDebug", "    URL长度: ${url.length} 字符")
+        if (url.length > 2048) {
+            Log.e("ImageLoadDebug", "    ⚠️ URL过长，可能导致请求失败")
+        }
+    }
+    
+    /**
      * 分析Cookie格式
      */
     private fun analyzeCookieFormat(cookie: String) {

@@ -12,14 +12,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.ImageRequest
+import com.hienao.scorpiotv.R
+import com.hienao.scorpiotv.ui.image.CoilImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.hienao.scorpiotv.presentation.base.CollectAsEffect
+import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -232,25 +239,6 @@ private fun MediaTopBar(
                 }
             }
         }
-
-        
-
-        // 分类筛选
-        if (categories.isNotEmpty()) {
-            androidx.compose.foundation.lazy.LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp)
-            ) {
-                items(count = categories.size) { index ->
-                    val category = categories[index]
-                    FilterChip(
-                        onClick = { onCategorySelected(category) },
-                        label = { Text(category) },
-                        selected = category == selectedCategory
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -271,13 +259,65 @@ private fun MediaItemCard(
     ) {
         Column {
             // 海报
-            AsyncImage(
-                model = item.poster,
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(item.poster)
+                    .crossfade(true)
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .error(R.drawable.ic_launcher_background)
+                    .build(),
                 contentDescription = item.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                },
+                error = {
+                    // 验证图片URL并记录错误
+                    LaunchedEffect(item.poster) {
+                        if (!CoilImageLoader.isValidImageUrl(item.poster)) {
+                            android.util.Log.w(
+                                "MediaScreen",
+                                "无效的图片URL: ${item.title} - ${item.poster}"
+                            )
+                        }
+                    }
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.BrokenImage,
+                                contentDescription = "图片加载失败",
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "图片不可用",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
             )
             
             // 信息

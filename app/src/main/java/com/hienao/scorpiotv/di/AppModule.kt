@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import android.content.Context
+import coil.ImageLoader
 import com.hienao.scorpiotv.ScorpioTvApplication
 import com.hienao.scorpiotv.data.network.ApiService
 import com.hienao.scorpiotv.data.network.DoubanApiService
@@ -16,6 +17,7 @@ import com.hienao.scorpiotv.domain.repository.DoubanRepository
 import com.hienao.scorpiotv.domain.repository.MediaRepository
 import com.hienao.scorpiotv.domain.repository.UserRepository
 import com.hienao.scorpiotv.presentation.screen.home.HomeViewModel
+import com.hienao.scorpiotv.ui.image.CoilImageLoader
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -123,6 +125,13 @@ val networkModule = module {
     
     // 豆瓣API Service - 使用认证版本，携带Cookie（根据API文档，豆瓣接口需要认证）
     single { DoubanApiService(get(named("auth"))) }
+    
+    // Coil ImageLoader 配置
+    single<ImageLoader> {
+        CoilImageLoader.createImageLoader(
+            context = get()
+        )
+    }
 }
 
 val databaseModule = module {

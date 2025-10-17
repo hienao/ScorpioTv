@@ -104,6 +104,11 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+    // Coil additional decoders
+    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0")
+    // OkHttp for Coil (Coil 默认使用 OkHttp)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // 视频播放器 - 暂时移除以解决网络连接问题
     // implementation("androidx.media3:media3-exoplayer:1.4.1")
