@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,22 +58,38 @@ private fun PrimaryCategoryFilterRow(
     selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        items(categories) { category ->
-            FilterChip(
-                onClick = { onCategorySelected(category) },
-                label = { 
-                    Text(
-                        text = category,
-                        fontSize = 14.sp,
-                        fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Normal
-                    )
-                },
-                selected = category == selectedCategory
-            )
+        // 分类标签
+        Text(
+            text = "分类",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        // 分类选项
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            items(categories) { category ->
+                FilterChip(
+                    onClick = { onCategorySelected(category) },
+                    label = {
+                        Text(
+                            text = category,
+                            fontSize = 14.sp,
+                            fontWeight = if (category == selectedCategory) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    selected = category == selectedCategory
+                )
+            }
         }
     }
 }
@@ -93,23 +110,39 @@ private fun SecondaryFilterRow(
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // 筛选类型选择
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+        // 筛选类型选择行
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(filterTypes) { filterType ->
-                FilterChip(
-                    onClick = { onFilterTypeSelected(filterType) },
-                    label = { 
-                        Text(
-                            text = filterType,
-                            fontSize = 14.sp,
-                            fontWeight = if (filterType == selectedFilterType) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    selected = filterType == selectedFilterType
-                )
+            // 筛选标签
+            Text(
+                text = "筛选",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            // 筛选类型选项
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(filterTypes) { filterType ->
+                    FilterChip(
+                        onClick = { onFilterTypeSelected(filterType) },
+                        label = {
+                            Text(
+                                text = filterType,
+                                fontSize = 14.sp,
+                                fontWeight = if (filterType == selectedFilterType) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        selected = filterType == selectedFilterType
+                    )
+                }
             }
         }
         
@@ -119,12 +152,12 @@ private fun SecondaryFilterRow(
                 if (filterState.typeOptions.isNotEmpty()) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
+                        contentPadding = PaddingValues(start = 80.dp, end = 16.dp) // 与筛选标签对齐
                     ) {
                         items(filterState.typeOptions) { type ->
                             FilterChip(
                                 onClick = { onTypeSelected(type) },
-                                label = { 
+                                label = {
                                     Text(
                                         text = type,
                                         fontSize = 14.sp
@@ -139,12 +172,12 @@ private fun SecondaryFilterRow(
             "地区" -> {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp)
+                    contentPadding = PaddingValues(start = 80.dp, end = 16.dp) // 与筛选标签对齐
                 ) {
                     items(filterState.regionOptions) { region ->
                         FilterChip(
                             onClick = { onRegionSelected(region) },
-                            label = { 
+                            label = {
                                 Text(
                                     text = region,
                                     fontSize = 14.sp
@@ -159,12 +192,12 @@ private fun SecondaryFilterRow(
                 if (filterState.sortOptions.isNotEmpty()) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
+                        contentPadding = PaddingValues(start = 80.dp, end = 16.dp) // 与筛选标签对齐
                     ) {
                         items(filterState.sortOptions) { sort ->
                             FilterChip(
                                 onClick = { onSortSelected(sort) },
-                                label = { 
+                                label = {
                                     Text(
                                         text = sort,
                                         fontSize = 14.sp
